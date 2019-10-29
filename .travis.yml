@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t yipwt/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true yipwt/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t yipwt/multi-client ./client
+  - docker build -t yipwt/multi-nginx ./nginx 
+  - docker build -t yipwt/multi-server ./server
+  - docker build -t yipwt/multi-worker ./worker
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Take those images and push them to docker hub
+  - docker push yipwt/multi-client
+  - docker push yipwt/multi-nginx
+  - docker push yipwt/multi-server
+  - docker push yipwt/multi-worker
+
